@@ -13,7 +13,18 @@ public class Player : MonoBehaviour
     private float _inputMove;
     private float _moveSpeed = 6f;
     private int _jumpForce = 5;
+    private int _jumpCount;
+    private const int _maxJumps = 2;
+    private bool _isGrounded = true;
     private bool _isFacingRight = true;
+    private float _dashForce = 10f;
+    private bool _isDashing = false;
+    private bool _isOnDashTime;
+    private float _arrowVelocity = 40f;
+
+    [SerializeField] GameObject dashEff;
+    [SerializeField] GameObject gunPos;
+    [SerializeField] GameObject arrowBullet;
     // Start is called before the first frame update
     void Start()
     {
@@ -25,9 +36,28 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Move();
+        if (!_isDashing)
+        {
+            Move();
+        }
+
         Attack();
-        Jump();
+
+        if (_isGrounded)
+        {
+            Jump();
+        }
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) && !_isOnDashTime)
+        {
+            Dash();
+            _isOnDashTime = true;
+            Invoke(nameof(ResetDash), 0.65f);
+        }
+    }
+    private void ResetDash()
+    {
+        _isOnDashTime = false;
     }
     private void Move()
     {
@@ -52,13 +82,54 @@ public class Player : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             _animator.SetTrigger("Attack");
+            StartCoroutine(WaitToAttack());
         }
     }
     private void Jump()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && _isGrounded && _jumpCount < _maxJumps)
         {
             _rb.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+            _jumpCount++;
         }
+    }
+    private void OnCollisionEnter2D(Collision2D player)
+    {
+        if (player.gameObject.CompareTag("Ground"))
+        {
+
+            _isGrounded = true;
+            _jumpCount = 0;
+        }
+        else
+        {
+            _isGrounded = false;
+            _jumpCount = 0;
+        }
+    }
+    private void Dash()
+    {
+        float dashDirection = _isFacingRight ? 1f : -1f;
+        _rb.velocity = new Vector2(dashDirection * _dashForce, _rb.velocity.y);
+        dashEff.SetActive(true);
+        _animator.SetTrigger("Dash");
+        _isDashing = true;
+        StartCoroutine(StopDash());
+    }
+    IEnumerator StopDash()
+    {
+        yield return new WaitForSeconds(0.4f);
+        _rb.velocity = new Vector2(0, _rb.velocity.y);
+        dashEff.SetActive(false);
+        _isDashing = false;
+    }
+    IEnumerator WaitToAttack()
+    {
+        yield return new WaitForSeconds(0.3f);
+        GameObject arrow = Instantiate(arrowBullet, gunPos.transform.position, Quaternion.identity);
+        Rigidbody2D arrowRb = arrow.GetComponent<Rigidbody2D>();
+        _rb.velocity = new Vector2(_arrowVelocity, _rb.velocity.y);
+        arrowRb.velocity = new Vector2(_isFacingRight ? _arrowVelocity : -_arrowVelocity, _rb.velocity.y);
+        Destroy(arrow, 0.5f);
     }
 }
