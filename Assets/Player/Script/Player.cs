@@ -10,6 +10,11 @@ public class Player : MonoBehaviour
     [SerializeField] private bool isFacingRight = true;
     private float jumpForce = 8f;
     [SerializeField] private bool isGrounded;
+    int attackCount = 0;
+    private float rollSpeed = 100f;
+    float lastAttackTime;
+    float lastRollTime;
+    
 
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.2f;
@@ -34,6 +39,19 @@ public class Player : MonoBehaviour
             Jump();
             StartCoroutine(StopJumpAnim());
         }
+
+        if(Input.GetMouseButtonDown(0) && Time.time - lastAttackTime >= 0.3f)
+        {
+            Attack();
+            lastAttackTime = Time.time;
+        }
+
+        if (Input.GetMouseButtonDown(1) && Time.time - lastRollTime >= 0.8f)
+        {
+            Roll();
+            lastRollTime = Time.time;
+        }
+
         GroundCheck();
     }
     private void Move()
@@ -70,5 +88,18 @@ public class Player : MonoBehaviour
     private void GroundCheck()
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+    }
+    private void Attack()
+    {
+        animator.SetTrigger("Attack" + (attackCount % 2 + 1));
+        attackCount++;
+        lastAttackTime = Time.time;
+    }
+    private void Roll()
+    {
+        var rollDirection = isFacingRight ? 1 : -1;
+        rb.velocity = new Vector2(rollDirection * rollSpeed, rb.velocity.y);
+        animator.SetTrigger("Roll");
+        lastRollTime = Time.time;
     }
 }
