@@ -11,7 +11,7 @@ public class Player : MonoBehaviour
     private float jumpForce = 8f;
     [SerializeField] private bool isGrounded;
     int attackCount = 0;
-    private float rollSpeed = 100f;
+    private float rollSpeed = 0.5f;
     float lastAttackTime;
     float lastRollTime;
     
@@ -46,11 +46,7 @@ public class Player : MonoBehaviour
             lastAttackTime = Time.time;
         }
 
-        if (Input.GetMouseButtonDown(1) && Time.time - lastRollTime >= 0.8f)
-        {
-            Roll();
-            lastRollTime = Time.time;
-        }
+        Roll();
 
         GroundCheck();
     }
@@ -97,9 +93,13 @@ public class Player : MonoBehaviour
     }
     private void Roll()
     {
-        var rollDirection = isFacingRight ? 1 : -1;
-        rb.velocity = new Vector2(rollDirection * rollSpeed, rb.velocity.y);
-        animator.SetTrigger("Roll");
-        lastRollTime = Time.time;
+        if (Input.GetMouseButtonDown(1) && Time.time - lastRollTime >= 0.8f)
+        {
+            float rollDirection = isFacingRight ? 1f : -1f;
+            Vector3 rollVector = new Vector3(rollDirection * rollSpeed, 0f, 0f);
+            transform.position += rollVector;
+            animator.SetTrigger("Roll");
+            lastRollTime = Time.time;
+        }
     }
 }
