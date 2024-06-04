@@ -14,6 +14,8 @@ public class Player : MonoBehaviour
     private float rollSpeed = 0.5f;
     float lastAttackTime;
     float lastRollTime;
+    private bool onLadder;
+    private float climbSpeed = 9f;
     
 
     [SerializeField] private Transform groundCheck;
@@ -36,11 +38,11 @@ public class Player : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
-            Jump();
-            StartCoroutine(StopJumpAnim());
+            Jump(); 
         }
+        animator.SetBool("Jump", !isGrounded);
 
-        if(Input.GetMouseButtonDown(0) && Time.time - lastAttackTime >= 0.3f)
+        if (Input.GetMouseButtonDown(0) && Time.time - lastAttackTime >= 0.3f)
         {
             Attack();
             lastAttackTime = Time.time;
@@ -52,34 +54,36 @@ public class Player : MonoBehaviour
     }
     private void Move()
     {
-        inputMove = Input.GetAxisRaw("Horizontal");
-        rb.velocity = new Vector2(inputMove * moveSpeed, rb.velocity.y);
+        if (onLadder)
+        {
+            rb.velocity = new Vector2(rb.velocity.x, Input.GetAxis( "Vertical") * climbSpeed);
+        }
+        else if (!onLadder)
+        {
+            inputMove = Input.GetAxisRaw("Horizontal");
+            rb.velocity = new Vector2(inputMove * moveSpeed, rb.velocity.y);
 
-        if (isFacingRight == true && inputMove == -1)
-        {
-            transform.localScale = new Vector3(-1, 1, 1);
-            isFacingRight = false;
+            if (isFacingRight == true && inputMove == -1)
+            {
+                transform.localScale = new Vector3(-1, 1, 1);
+                isFacingRight = false;
+            }
+            if (isFacingRight == false && inputMove == 1)
+            {
+                transform.localScale = new Vector3(1, 1, 1);
+                isFacingRight = true;
+            }
+            animator.SetFloat("Running", Mathf.Abs(inputMove));
         }
-        if (isFacingRight == false && inputMove == 1)
-        {
-            transform.localScale = new Vector3(1, 1, 1);
-            isFacingRight = true;
-        }
-        animator.SetFloat("Running", Mathf.Abs(inputMove));
     }
     private void Jump()
     {
         rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-        animator.SetTrigger("Jump");
-    }
-    IEnumerator StopJumpAnim()
-    {
-        yield return new WaitForSeconds(2.5f);
-        //animator.SetBool("Fall", true);
-        //if (isGrounded)
-        //{
-        //    animator.SetBool("Fall", false);
-        //}
+        if (isGrounded != true)
+        {
+            return;
+        }
+        animator.SetBool("Jump", false);
     }
     private void GroundCheck()
     {
@@ -89,6 +93,10 @@ public class Player : MonoBehaviour
     {
         animator.SetTrigger("Attack" + (attackCount % 2 + 1));
         attackCount++;
+        if (Time.time - lastAttackTime >= 0.5f)
+        {
+            attackCount = 0;
+        }
         lastAttackTime = Time.time;
     }
     private void Roll()
@@ -100,6 +108,20 @@ public class Player : MonoBehaviour
             transform.position += rollVector;
             animator.SetTrigger("Roll");
             lastRollTime = Time.time;
+        }
+    }
+    private void OnTriggerEnter2D(Collider2D players)
+    {
+        if (players.CompareTag("Ladder"))
+        {
+            onLadder = true;
+        }
+    }
+    private void OnTriggerExit2D(Collider2D players)
+    {
+        if (players.CompareTag("Ladder"))
+        {
+            onLadder = false;
         }
     }
 }

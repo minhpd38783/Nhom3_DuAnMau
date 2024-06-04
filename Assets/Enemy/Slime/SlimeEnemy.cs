@@ -1,38 +1,38 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditorInternal;
 using UnityEngine;
 
 public class SlimeEnemy : MonoBehaviour
 {
-    // Speed of the enemy movement
-    public float speed = 5.0f;
-
-    // Distance the enemy will move from the starting position
-    public float distance = 5.0f;
-
-    // Reference to the Rigidbody2D component
+    public float speed = 5f;
     private Rigidbody2D rb;
 
-    // Starting position of the enemy
-    private Vector3 startPos;
+    private bool facingRight = true;
 
     // Start is called before the first frame update
     void Start()
     {
-        // Save the starting position of the enemy
-        startPos = transform.position;
-
-        // Get the Rigidbody2D component
         rb = GetComponent<Rigidbody2D>();
+        StartCoroutine(WaitToFlip());
     }
-
-    // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        // Calculate the new position using PingPong to move back and forth
-        float newPos = Mathf.PingPong(Time.time * speed, distance) - (distance / 2);
-
-        // Set the new position
-        rb.MovePosition(new Vector2(startPos.x + newPos, startPos.y));
+        if(facingRight)
+        {
+            rb.velocity = new Vector2(speed, rb.velocity.y);
+            transform.localScale = new Vector3(1, 1, 1);
+        }
+        else
+        {
+            rb.velocity = new Vector2(-speed, rb.velocity.y);
+            transform.localScale = new Vector3(-1, 1, 1);
+        }
+    }
+    IEnumerator WaitToFlip()
+    {
+        yield return new WaitForSeconds(3f);
+        facingRight = !facingRight;
+        StartCoroutine(WaitToFlip());
     }
 }
