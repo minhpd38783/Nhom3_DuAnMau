@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -16,7 +17,11 @@ public class Player : MonoBehaviour
     float lastRollTime;
     private bool onLadder;
     private float climbSpeed = 9f;
-    
+
+    [SerializeField] private GameObject gameOver;
+    [SerializeField] private HealthBarPlayer heathBar;
+    private int maxHealth = 100;
+    private int currentHealth;
 
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.2f;
@@ -29,6 +34,7 @@ public class Player : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        heathBar.SetMaxHealth(maxHealth);
     }
 
     // Update is called once per frame
@@ -122,6 +128,24 @@ public class Player : MonoBehaviour
         if (players.CompareTag("Ladder"))
         {
             onLadder = false;
+        }
+    }
+    private void OnCollisionEnter2D(Collision2D player)
+    {
+        if (player.gameObject.CompareTag("Trap"))
+        {
+            TakeDamage();
+        }
+    }
+    void TakeDamage()
+    {
+        currentHealth -= 20;
+        heathBar.SetHealth(currentHealth);
+        if (currentHealth <= 0)
+        {
+            gameOver.SetActive(true);
+            Time.timeScale = 0f;
+            Debug.Log("Game Over");
         }
     }
 }
