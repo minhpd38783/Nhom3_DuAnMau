@@ -1,6 +1,9 @@
 {
   "dependencies": {
+<<<<<<< HEAD
     "com.unity.adaptiveperformance": "5.1.0",
+=======
+>>>>>>> 51fca13f1cd26d9079eaeddb93257eebc045c9f8
     "com.unity.cinemachine": "2.9.7",
     "com.unity.collab-proxy": "2.3.1",
     "com.unity.feature.2d": "2.0.0",
