@@ -19,6 +19,7 @@ public class Player : MonoBehaviour
     private float climbSpeed = 9f;
 
     [SerializeField] private GameObject gameOver;
+    [SerializeField] private Health health;
     private int maxHealth = 100;
     private int currentHealth;
 
@@ -33,6 +34,9 @@ public class Player : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+
+        currentHealth = maxHealth;
+        health.SetMaxHealth(maxHealth);
     }
 
     // Update is called once per frame
@@ -132,12 +136,14 @@ public class Player : MonoBehaviour
     {
         if (player.gameObject.CompareTag("Trap"))
         {
-            TakeDamage();
+            TakeDamage(10);
         }
     }
-    void TakeDamage()
+    void TakeDamage(int damage)
     {
-        currentHealth -= 20;
+        currentHealth -= damage;
+        health.SetHealth(currentHealth);
+
         if (currentHealth <= 0)
         {
             gameOver.SetActive(true);
