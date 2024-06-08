@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,9 +24,23 @@ public class Player : MonoBehaviour
     private int maxHealth = 100;
     private int currentHealth;
 
+    [SerializeField] private TextMeshProUGUI scoreCollected;
+    private static int _score = 0;
+
+    [SerializeField] AudioSource slashSource;
+    [SerializeField] AudioClip slashClip;
+    [SerializeField] AudioSource painSource;
+    [SerializeField] AudioClip painClip;
+    [SerializeField] AudioSource coinSource;
+    [SerializeField] AudioClip coinClip;
+
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private LayerMask groundLayer;
+
+    [SerializeField] private Transform attackPoint;
+    [SerializeField] private float attackRadius = 0.8f;
+    [SerializeField] private LayerMask enemyLayer;
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -37,6 +52,12 @@ public class Player : MonoBehaviour
 
         currentHealth = maxHealth;
         health.SetMaxHealth(maxHealth);
+
+        scoreCollected.text = _score.ToString();
+
+        slashSource.clip = slashClip;
+        painSource.clip = painClip;
+        coinSource.clip = coinClip;
     }
 
     // Update is called once per frame
@@ -101,11 +122,18 @@ public class Player : MonoBehaviour
     {
         animator.SetTrigger("Attack" + (attackCount % 2 + 1));
         attackCount++;
+        slashSource.PlayOneShot(slashSource.clip);
         if (Time.time - lastAttackTime >= 0.5f)
         {
             attackCount = 0;
         }
         lastAttackTime = Time.time;
+
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRadius, enemyLayer);
+        /*foreach (Collider2D enemy in hitEnemies)
+        {
+            enemy.GetComponent<Enemy>().TakeDamage(10); // Assuming Enemy script has a TakeDamage method
+        }*/
     }
     private void Roll()
     {
@@ -118,25 +146,21 @@ public class Player : MonoBehaviour
             lastRollTime = Time.time;
         }
     }
-    private void OnTriggerEnter2D(Collider2D players)
-    {
-        if (players.CompareTag("Ladder"))
-        {
-            onLadder = true;
-        }
-    }
-    private void OnTriggerExit2D(Collider2D players)
-    {
-        if (players.CompareTag("Ladder"))
-        {
-            onLadder = false;
-        }
-    }
     private void OnCollisionEnter2D(Collision2D player)
     {
         if (player.gameObject.CompareTag("Trap"))
         {
             TakeDamage(10);
+            painSource.PlayOneShot(painSource.clip);
+        }
+    }
+    private void OnTriggerEnter2D(Collider2D players)
+    {
+        if (players.CompareTag("Coin"))
+        {
+            _score += 10;
+            scoreCollected.text = _score.ToString();
+            coinSource.PlayOneShot(coinSource.clip);
         }
     }
     void TakeDamage(int damage)
@@ -150,5 +174,12 @@ public class Player : MonoBehaviour
             Time.timeScale = 0f;
             Debug.Log("Game Over");
         }
+    }
+    private void OnDrawGizmosSelected()
+    {
+        if (attackPoint == null)
+            return;
+
+        Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
     }
 }
