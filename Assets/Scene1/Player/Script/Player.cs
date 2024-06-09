@@ -1,3 +1,4 @@
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -19,6 +20,7 @@ public class Player : MonoBehaviour
     private bool onLadder;
     private float climbSpeed = 9f;
 
+    [SerializeField] GameObject activeBoss;
     [SerializeField] private GameObject gameOver;
     [SerializeField] private Health health;
     private int maxHealth = 100;
@@ -27,12 +29,24 @@ public class Player : MonoBehaviour
     [SerializeField] private TextMeshProUGUI scoreCollected;
     private static int _score = 0;
 
+    [SerializeField] GameObject resultGameObject;
+    [SerializeField] TextMeshProUGUI resultScore;
+    [SerializeField] TextMeshProUGUI resultTime;
+
+    private float startTime;
+    private float endTime;
+
     [SerializeField] AudioSource slashSource;
     [SerializeField] AudioClip slashClip;
     [SerializeField] AudioSource painSource;
     [SerializeField] AudioClip painClip;
     [SerializeField] AudioSource coinSource;
     [SerializeField] AudioClip coinClip;
+    [SerializeField] AudioSource swordHitSource;
+    [SerializeField] AudioClip swordHitClip;
+    [SerializeField] AudioSource scene1Source;
+    [SerializeField] AudioSource victorySource;
+    [SerializeField] AudioClip victoryClip;
 
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.2f;
@@ -58,6 +72,10 @@ public class Player : MonoBehaviour
         slashSource.clip = slashClip;
         painSource.clip = painClip;
         coinSource.clip = coinClip;
+        swordHitSource.clip = swordHitClip;
+        victorySource.clip = victoryClip;
+
+        startTime = Time.time; //Lưu thời gian bắt đầu
     }
 
     // Update is called once per frame
@@ -130,10 +148,11 @@ public class Player : MonoBehaviour
         lastAttackTime = Time.time;
 
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRadius, enemyLayer);
-        /*foreach (Collider2D enemy in hitEnemies)
+        foreach (Collider2D enemy in hitEnemies)
         {
-            enemy.GetComponent<Enemy>().TakeDamage(10); // Assuming Enemy script has a TakeDamage method
-        }*/
+            enemy.GetComponent<BossHealth>().TakeDamage(50);
+            swordHitSource.PlayOneShot(swordHitSource.clip);
+        }
     }
     private void Roll()
     {
@@ -162,8 +181,29 @@ public class Player : MonoBehaviour
             scoreCollected.text = _score.ToString();
             coinSource.PlayOneShot(coinSource.clip);
         }
+
+        if (players.CompareTag("ActiveBoss"))
+        {
+            activeBoss.SetActive(true);
+        }
+
+        if (players.tag == "End")
+        {
+            scene1Source.Pause();
+            resultGameObject.SetActive(true);
+            victorySource.PlayOneShot(victorySource.clip);
+            endTime = Time.time; // Lưu thời gian kết thúc
+            PrintSummarry();
+            Time.timeScale = 0f;
+        }
     }
-    void TakeDamage(int damage)
+    private void PrintSummarry()
+    {
+        float timePlayed = endTime - startTime;
+        resultScore.text = $"Score: {_score}";
+        resultTime.text = $"Time: {timePlayed:F1} seconds";
+    }
+    public void TakeDamage(int damage)
     {
         currentHealth -= damage;
         health.SetHealth(currentHealth);
