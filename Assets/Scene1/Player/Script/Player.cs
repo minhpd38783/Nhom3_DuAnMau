@@ -11,10 +11,10 @@ public class Player : MonoBehaviour
     [SerializeField] private float inputMove;
     private float moveSpeed = 8f;
     [SerializeField] private bool isFacingRight = true;
-    private float jumpForce = 8f;
+    private float jumpForce = 58f;
     [SerializeField] private bool isGrounded;
     int attackCount = 0;
-    private float rollSpeed = 0.5f;
+    private float rollSpeed = 1f;
     float lastAttackTime;
     float lastRollTime;
     private bool onLadder;
@@ -44,6 +44,8 @@ public class Player : MonoBehaviour
     [SerializeField] AudioClip coinClip;
     [SerializeField] AudioSource swordHitSource;
     [SerializeField] AudioClip swordHitClip;
+    [SerializeField] AudioSource healSource;
+    [SerializeField] AudioClip healClip;
     [SerializeField] AudioSource scene1Source;
     [SerializeField] AudioSource victorySource;
     [SerializeField] AudioClip victoryClip;
@@ -73,6 +75,7 @@ public class Player : MonoBehaviour
         painSource.clip = painClip;
         coinSource.clip = coinClip;
         swordHitSource.clip = swordHitClip;
+        healSource.clip = healClip;
         victorySource.clip = victoryClip;
 
         startTime = Time.time; //Lưu thời gian bắt đầu
@@ -148,9 +151,20 @@ public class Player : MonoBehaviour
         lastAttackTime = Time.time;
 
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRadius, enemyLayer);
-        foreach (Collider2D enemy in hitEnemies)
+        foreach (Collider2D enemyCollider in hitEnemies)
         {
-            enemy.GetComponent<BossHealth>().TakeDamage(50);
+            // Kiểm tra nếu quái vật là Boss
+            BossHealth bossHealth = enemyCollider.GetComponent<BossHealth>();
+            if (bossHealth != null)
+            {
+                bossHealth.TakeDamage(50);
+            }
+            EnemyHealth enemyHealth = enemyCollider.GetComponent<EnemyHealth>();
+            if (enemyHealth != null)
+            {
+                enemyHealth.TakeDamage(20);
+            }
+            // Phát âm thanh khi đánh trúng
             swordHitSource.PlayOneShot(swordHitSource.clip);
         }
     }
@@ -172,6 +186,11 @@ public class Player : MonoBehaviour
             TakeDamage(10);
             painSource.PlayOneShot(painSource.clip);
         }
+        if (player.gameObject.CompareTag("Fly"))
+        {
+            TakeDamage(15);
+            painSource.PlayOneShot(painSource.clip);
+        }
     }
     private void OnTriggerEnter2D(Collider2D players)
     {
@@ -180,6 +199,13 @@ public class Player : MonoBehaviour
             _score += 10;
             scoreCollected.text = _score.ToString();
             coinSource.PlayOneShot(coinSource.clip);
+        }
+        if (players.CompareTag("Heart"))
+        {
+            // Hàm hồi máu cho Player
+            HealPlayer(50);
+            // Phát âm thanh hồi máu
+            healSource.PlayOneShot(healSource.clip);
         }
 
         if (players.CompareTag("ActiveBoss"))
@@ -214,6 +240,16 @@ public class Player : MonoBehaviour
             Time.timeScale = 0f;
             Debug.Log("Game Over");
         }
+    }
+    public void HealPlayer(int healAmount)
+    {
+        currentHealth += healAmount;
+        // Đảm bảo máu ko vượt quá ngưỡng
+        if (currentHealth >= maxHealth)
+        {
+            currentHealth = maxHealth;
+        }
+        health.SetHealth(currentHealth);
     }
     private void OnDrawGizmosSelected()
     {

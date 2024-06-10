@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class IBossHealth : MonoBehaviour
 {
-    public int maxHealth = 100;
+    public int maxHealth = 50;
     private int currentHealth;
     private bool isDead = false; // Bi?n ki?m tra xem bot ?ã ch?t ch?a
 

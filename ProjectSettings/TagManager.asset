@@ -8,6 +8,8 @@ TagManager:
   - Coin
   - End
   - ActiveBoss
+  - Fly
+  - Heart
   layers:
   - Default
   - TransparentFX
